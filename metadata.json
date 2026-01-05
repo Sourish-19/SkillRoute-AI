@@ -1,0 +1,7 @@
+{
+  "name": "SkillRoute AI",
+  "description": "The Career Navigation Engine for Tier-2 & Tier-3 Students. Personalized AI-driven roadmaps, local opportunity matching, and vernacular inclusion to bridge the employability gap.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
