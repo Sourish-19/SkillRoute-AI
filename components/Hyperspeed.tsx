@@ -1,5 +1,5 @@
 
-import React, { useEffect, useRef, FC, useMemo } from 'react';
+import React, { useEffect, useRef, FC, useMemo, useState } from 'react';
 import * as THREE from 'three';
 import * as POSTPROCESSING from 'postprocessing';
 
@@ -105,7 +105,7 @@ const distortions: Distortions = {
 };
 
 const getRoadVertexShader = (distortionGLSL: string) => `
-  #define USE_FOG;
+  #define USE_FOG
   uniform float uTime;
   ${THREE.ShaderChunk['fog_pars_vertex']}
   uniform float uTravelLength;
@@ -128,7 +128,7 @@ const getRoadVertexShader = (distortionGLSL: string) => `
 `;
 
 const islandFragment = `
-  #define USE_FOG;
+  #define USE_FOG
   varying vec2 vUv; 
   uniform vec3 uColor;
   ${THREE.ShaderChunk['fog_pars_fragment']}
@@ -139,7 +139,7 @@ const islandFragment = `
 `;
 
 const roadFragment = `
-  #define USE_FOG;
+  #define USE_FOG
   varying vec2 vUv; 
   uniform vec3 uColor;
   uniform float uTime;
@@ -190,21 +190,28 @@ class AppEngine {
       ? distortions[options.distortion] || distortions.turbulentDistortion
       : options.distortion || distortions.turbulentDistortion;
 
-    this.renderer = new THREE.WebGLRenderer({ antialias: false, alpha: true });
-    this.renderer.setPixelRatio(window.devicePixelRatio);
-    const width = container.clientWidth || 800;
-    const height = container.clientHeight || 600;
+    this.renderer = new THREE.WebGLRenderer({ 
+      antialias: false, 
+      alpha: true,
+      powerPreference: 'high-performance'
+    });
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    const width = container.clientWidth || window.innerWidth;
+    const height = container.clientHeight || window.innerHeight;
     this.renderer.setSize(width, height);
     
-    this.composer = new EffectComposer(this.renderer);
-    container.appendChild(this.renderer.domElement);
+    this.composer = new EffectComposer(this.renderer, {
+      multisampling: 0,
+      frameBufferType: THREE.HalfFloatType
+    });
 
     this.camera = new THREE.PerspectiveCamera(options.fov, width / height, 0.1, 10000);
     this.camera.position.set(0, 8, -5);
     this.camera.lookAt(0, 0, -50);
 
     this.scene = new THREE.Scene();
-    const fog = new THREE.Fog(options.colors.background, options.length * 0.2, options.length * 5);
+    const fogColor = new THREE.Color(options.colors.background);
+    const fog = new THREE.Fog(fogColor, options.length * 0.2, options.length * 5);
     this.scene.fog = fog;
     this.fogUniforms = {
       fogColor: { value: fog.color },
@@ -214,7 +221,6 @@ class AppEngine {
 
     this.clock = new THREE.Clock();
 
-    // Create Road
     const createPlane = (side: number, isRoad: boolean) => {
       const geometry = new THREE.PlaneGeometry(
         isRoad ? options.roadWidth : options.islandWidth,
@@ -254,12 +260,17 @@ class AppEngine {
     createPlane(0, false);
 
     const renderPass = new RenderPass(this.scene, this.camera);
-    const bloomEffect = new BloomEffect({ luminanceThreshold: 0.2, intensity: 1.2 });
+    const bloomEffect = new BloomEffect({ 
+      luminanceThreshold: 0.2, 
+      intensity: 1.2,
+      mipmapBlur: true
+    });
     const effectPass = new EffectPass(this.camera, bloomEffect);
     
     this.composer.addPass(renderPass);
     this.composer.addPass(effectPass);
 
+    container.appendChild(this.renderer.domElement);
     this.tick = this.tick.bind(this);
   }
 
@@ -273,9 +284,14 @@ class AppEngine {
 
   dispose() {
     this.disposed = true;
-    this.renderer.dispose();
-    this.composer.dispose();
-    if (this.container.contains(this.renderer.domElement)) {
+    if (this.renderer) {
+      this.renderer.dispose();
+      this.renderer.forceContextLoss();
+    }
+    if (this.composer) {
+      this.composer.dispose();
+    }
+    if (this.container && this.renderer.domElement && this.container.contains(this.renderer.domElement)) {
       this.container.removeChild(this.renderer.domElement);
     }
   }
@@ -284,6 +300,7 @@ class AppEngine {
 const Hyperspeed: FC<HyperspeedProps> = ({ effectOptions }) => {
   const hyperspeedRef = useRef<HTMLDivElement>(null);
   const engineRef = useRef<AppEngine | null>(null);
+  const [isReady, setIsReady] = useState(false);
 
   const mergedOptions = useMemo(() => ({
     ...defaultOptions,
@@ -294,25 +311,51 @@ const Hyperspeed: FC<HyperspeedProps> = ({ effectOptions }) => {
     const container = hyperspeedRef.current;
     if (!container) return;
 
-    // Small delay to ensure container has valid dimensions
-    const timeout = setTimeout(() => {
-      if (!container.clientWidth || !container.clientHeight) return;
-      
-      const engine = new AppEngine(container, mergedOptions);
-      engineRef.current = engine;
-      engine.tick();
-    }, 100);
+    let engine: AppEngine | null = null;
+    
+    // Initial ready check
+    if (container.clientWidth > 0) setIsReady(true);
+
+    const timer = setTimeout(() => {
+      try {
+        if (!container.clientWidth) return;
+        engine = new AppEngine(container, mergedOptions);
+        engineRef.current = engine;
+        engine.tick();
+        setIsReady(true);
+      } catch (e) {
+        console.error("Hyperspeed WebGL failed to initialize:", e);
+      }
+    }, 200);
+
+    const handleResize = () => {
+      if (engine && engine.renderer && engine.camera && container) {
+        const w = container.clientWidth;
+        const h = container.clientHeight;
+        engine.renderer.setSize(w, h);
+        engine.camera.aspect = w / h;
+        engine.camera.updateProjectionMatrix();
+        engine.composer.setSize(w, h);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
 
     return () => {
-      clearTimeout(timeout);
-      if (engineRef.current) {
-        engineRef.current.dispose();
-        engineRef.current = null;
+      clearTimeout(timer);
+      window.removeEventListener('resize', handleResize);
+      if (engine) {
+        engine.dispose();
       }
+      engineRef.current = null;
     };
   }, [mergedOptions]);
 
-  return <div ref={hyperspeedRef} className="w-full h-full relative overflow-hidden bg-black" />;
+  return (
+    <div ref={hyperspeedRef} className="w-full h-full relative overflow-hidden bg-black" style={{ minHeight: '100px' }}>
+      {!isReady && <div className="absolute inset-0 bg-[#09090b]" />}
+    </div>
+  );
 };
 
 export default Hyperspeed;
