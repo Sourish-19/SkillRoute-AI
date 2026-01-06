@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { generateRoadmap } from '../services/geminiService';
 import { StudentProfile, Roadmap } from '../types';
 import { useTranslation } from './TranslationContext';
@@ -8,9 +8,10 @@ interface RoadmapBuilderProps {
   profile: StudentProfile;
   cachedData: Roadmap | null;
   onUpdate: (data: Roadmap) => void;
+  searchQuery?: string;
 }
 
-export const RoadmapBuilder: React.FC<RoadmapBuilderProps> = ({ profile, cachedData, onUpdate }) => {
+export const RoadmapBuilder: React.FC<RoadmapBuilderProps> = ({ profile, cachedData, onUpdate, searchQuery = '' }) => {
   const { t } = useTranslation();
   const [roadmap, setRoadmap] = useState<Roadmap | null>(cachedData);
   const [isLoading, setIsLoading] = useState(!cachedData);
@@ -33,6 +34,17 @@ export const RoadmapBuilder: React.FC<RoadmapBuilderProps> = ({ profile, cachedD
       fetchRoadmap();
     }
   }, [profile, cachedData]);
+
+  const filteredSteps = useMemo(() => {
+    if (!roadmap) return [];
+    if (!searchQuery) return roadmap.steps;
+    const q = searchQuery.toLowerCase();
+    return roadmap.steps.filter(s => 
+      s.topic.toLowerCase().includes(q) || 
+      s.description.toLowerCase().includes(q) ||
+      s.tasks.some(task => task.toLowerCase().includes(q))
+    );
+  }, [roadmap, searchQuery]);
 
   if (isLoading) {
     return (
@@ -63,29 +75,43 @@ export const RoadmapBuilder: React.FC<RoadmapBuilderProps> = ({ profile, cachedD
         </button>
       </div>
 
-      <div className="relative space-y-12 before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-zinc-800 before:to-transparent">
-        {roadmap.steps.map((step, idx) => (
-          <div key={step.week} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group">
-            <div className="flex items-center justify-center w-10 h-10 rounded-full border border-zinc-700 bg-zinc-900 group-hover:border-emerald-500 transition-colors shadow-xl z-10 shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2">
-              <span className="text-xs font-bold text-zinc-400 group-hover:text-emerald-500">{step.week}</span>
-            </div>
-
-            <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] glass p-6 rounded-2xl hover:bg-zinc-900/80 transition-all border border-zinc-800 group-hover:border-emerald-500/30">
-              <div className="flex items-center justify-between mb-3">
-                <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
-                  step.resourceType === 'Local' ? 'bg-blue-500/20 text-blue-400' : 
-                  step.resourceType === 'Online' ? 'bg-purple-500/20 text-purple-400' : 'bg-orange-500/20 text-orange-400'
-                }`}>
-                  {step.resourceType}
-                </span>
-                <span className="text-xs text-zinc-500">Week {step.week}</span>
+      {filteredSteps.length === 0 ? (
+        <div className="py-20 text-center glass rounded-2xl border-dashed">
+          <p className="text-zinc-500">No steps match your search "{searchQuery}"</p>
+        </div>
+      ) : (
+        <div className="relative space-y-12 before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-zinc-800 before:to-transparent">
+          {filteredSteps.map((step, idx) => (
+            <div key={step.week} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group">
+              <div className="flex items-center justify-center w-10 h-10 rounded-full border border-zinc-700 bg-zinc-900 group-hover:border-emerald-500 transition-colors shadow-xl z-10 shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2">
+                <span className="text-xs font-bold text-zinc-400 group-hover:text-emerald-500">{step.week}</span>
               </div>
-              <h4 className="font-bold text-lg mb-2">{step.topic}</h4>
-              <p className="text-sm text-zinc-400 mb-4">{step.description}</p>
+
+              <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] glass p-6 rounded-2xl hover:bg-zinc-900/80 transition-all border border-zinc-800 group-hover:border-emerald-500/30">
+                <div className="flex items-center justify-between mb-3">
+                  <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                    step.resourceType === 'Local' ? 'bg-blue-500/20 text-blue-400' : 
+                    step.resourceType === 'Online' ? 'bg-purple-500/20 text-purple-400' : 'bg-orange-500/20 text-orange-400'
+                  }`}>
+                    {step.resourceType}
+                  </span>
+                  <span className="text-xs text-zinc-500">Week {step.week}</span>
+                </div>
+                <h4 className="font-bold text-lg mb-2">{step.topic}</h4>
+                <p className="text-sm text-zinc-400 mb-4">{step.description}</p>
+                <div className="space-y-2">
+                  {step.tasks.map((task, i) => (
+                    <div key={i} className="flex items-center gap-2 text-xs text-zinc-500">
+                      <div className="w-1.5 h-1.5 rounded-full bg-emerald-500/50" />
+                      {task}
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

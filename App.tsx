@@ -20,7 +20,9 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('overview');
   const [profile, setProfile] = useState<StudentProfile | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [user, setUser] = useState<{ email: string } | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Caching state
   const [roadmap, setRoadmap] = useState<Roadmap | null>(null);
@@ -56,100 +58,105 @@ export default function App() {
 
   const handleProfileUpdate = (newProfile: StudentProfile) => {
     setProfile(newProfile);
-    // Clear cache if critical fields changed to ensure AI regenerates with new context
+    // Clear cache if critical fields changed
     setRoadmap(null);
     setOpportunities(null);
     setMentors(null);
     localStorage.setItem('skillroute_profile', JSON.stringify(newProfile));
   };
 
-  const handleEmailUpdate = (newEmail: string) => {
-    if (user) {
-      const updatedUser = { ...user, email: newEmail };
-      setUser(updatedUser);
-      localStorage.setItem('skillroute_user', JSON.stringify(updatedUser));
-    }
-  };
-
   const currentLang = (profile?.preferredLanguage as SupportedLanguage) || 'English';
 
   return (
     <TranslationProvider language={currentLang}>
-      {view === 'landing' && (
-        <LandingPage onStart={() => setView('auth')} />
-      )}
-      
-      {view === 'auth' && (
-        <Auth onBack={() => setView('landing')} onAuth={handleLogin} />
-      )}
+      <div className="bg-[#09090b] text-zinc-100">
+        {view === 'landing' && (
+          <LandingPage onStart={() => setView('auth')} />
+        )}
+        
+        {view === 'auth' && (
+          <Auth onBack={() => setView('landing')} onAuth={handleLogin} />
+        )}
 
-      {view === 'app' && (
-        !profile ? (
-          <div className="min-h-screen bg-[#09090b] flex items-center justify-center p-4">
-            <AnalysisForm onComplete={(p) => {
-              handleProfileUpdate(p);
-              setActiveTab('overview');
-            }} />
-          </div>
-        ) : (
-          <div className="flex h-screen bg-[#09090b] overflow-hidden text-zinc-100">
-            <Sidebar 
-              isOpen={isSidebarOpen} 
-              activeTab={activeTab} 
-              onTabChange={setActiveTab} 
-              onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
-              onLogout={handleLogout}
-            />
-            
-            <main className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
-              <Header 
-                profile={profile} 
-                onOpenProfile={() => setActiveTab('profile')} 
-                onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+        {view === 'app' && (
+          !profile ? (
+            <div className="min-h-screen flex items-center justify-center p-4">
+              <AnalysisForm onComplete={(p) => {
+                handleProfileUpdate(p);
+                setActiveTab('overview');
+              }} />
+            </div>
+          ) : (
+            <div className="flex h-screen overflow-hidden">
+              <Sidebar 
+                isOpen={isSidebarOpen} 
+                isMobileOpen={isMobileSidebarOpen}
+                activeTab={activeTab} 
+                onTabChange={(tab) => {
+                  setActiveTab(tab);
+                  setIsMobileSidebarOpen(false);
+                }} 
+                onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
+                onCloseMobile={() => setIsMobileSidebarOpen(false)}
+                onLogout={handleLogout}
               />
               
-              <div className="flex-1 overflow-y-auto p-4 md:p-8 relative z-10">
-                <div className="max-w-7xl mx-auto space-y-8">
-                  {activeTab === 'overview' && profile && <Overview profile={profile} />}
-                  {activeTab === 'roadmap' && profile && (
-                    <RoadmapBuilder 
-                      profile={profile} 
-                      cachedData={roadmap} 
-                      onUpdate={setRoadmap} 
-                    />
-                  )}
-                  {activeTab === 'opportunities' && profile && (
-                    <LocalOpportunitiesFeed 
-                      profile={profile} 
-                      cachedData={opportunities} 
-                      onUpdate={setOpportunities} 
-                    />
-                  )}
-                  {activeTab === 'mentorship' && profile && (
-                    <Mentorship 
-                      profile={profile} 
-                      cachedData={mentors} 
-                      onUpdate={setMentors} 
-                    />
-                  )}
-                  {activeTab === 'profile' && profile && user && (
-                    <ProfilePage 
-                      profile={profile} 
-                      userEmail={user.email}
-                      onUpdate={handleProfileUpdate}
-                      onUpdateEmail={handleEmailUpdate}
-                    />
-                  )}
-                  {activeTab === 'setup' && <AnalysisForm onComplete={(p) => {
-                    handleProfileUpdate(p);
-                    setActiveTab('overview');
-                  }} initialData={profile || undefined} />}
+              <main className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
+                <Header 
+                  profile={profile} 
+                  onSearch={setSearchQuery}
+                  onOpenProfile={() => setActiveTab('profile')} 
+                  onToggleSidebar={() => setIsMobileSidebarOpen(true)}
+                />
+                
+                <div className="flex-1 overflow-y-auto p-4 md:p-8 relative z-10">
+                  <div className="max-w-7xl mx-auto space-y-8">
+                    {activeTab === 'overview' && profile && <Overview profile={profile} />}
+                    {activeTab === 'roadmap' && profile && (
+                      <RoadmapBuilder 
+                        profile={profile} 
+                        cachedData={roadmap} 
+                        onUpdate={setRoadmap} 
+                        searchQuery={searchQuery}
+                      />
+                    )}
+                    {activeTab === 'opportunities' && profile && (
+                      <LocalOpportunitiesFeed 
+                        profile={profile} 
+                        cachedData={opportunities} 
+                        onUpdate={setOpportunities} 
+                        searchQuery={searchQuery}
+                      />
+                    )}
+                    {activeTab === 'mentorship' && profile && (
+                      <Mentorship 
+                        profile={profile} 
+                        cachedData={mentors} 
+                        onUpdate={setMentors} 
+                        searchQuery={searchQuery}
+                      />
+                    )}
+                    {activeTab === 'profile' && profile && user && (
+                      <ProfilePage 
+                        profile={profile} 
+                        userEmail={user.email}
+                        onUpdate={handleProfileUpdate}
+                        onUpdateEmail={(email) => {
+                           if(user) setUser({...user, email});
+                        }}
+                      />
+                    )}
+                    {activeTab === 'setup' && <AnalysisForm onComplete={(p) => {
+                      handleProfileUpdate(p);
+                      setActiveTab('overview');
+                    }} initialData={profile || undefined} />}
+                  </div>
                 </div>
-              </div>
-            </main>
-          </div>
-        )
-      )}
+              </main>
+            </div>
+          )
+        )}
+      </div>
     </TranslationProvider>
   );
 }

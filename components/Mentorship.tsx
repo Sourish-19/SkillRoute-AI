@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { suggestMentors, getMentorAdvice } from '../services/geminiService';
 import { StudentProfile } from '../types';
@@ -16,9 +16,10 @@ interface MentorshipProps {
   profile: StudentProfile;
   cachedData: Mentor[] | null;
   onUpdate: (data: Mentor[]) => void;
+  searchQuery?: string;
 }
 
-export const Mentorship: React.FC<MentorshipProps> = ({ profile, cachedData, onUpdate }) => {
+export const Mentorship: React.FC<MentorshipProps> = ({ profile, cachedData, onUpdate, searchQuery = '' }) => {
   const { t } = useTranslation();
   const [mentors, setMentors] = useState<Mentor[]>(cachedData || []);
   const [loading, setLoading] = useState(!cachedData);
@@ -44,6 +45,17 @@ export const Mentorship: React.FC<MentorshipProps> = ({ profile, cachedData, onU
     };
     fetchMentors();
   }, [profile, cachedData, onUpdate]);
+
+  const filteredMentors = useMemo(() => {
+    if (!searchQuery) return mentors;
+    const q = searchQuery.toLowerCase();
+    return mentors.filter(m => 
+      m.name.toLowerCase().includes(q) || 
+      m.role.toLowerCase().includes(q) || 
+      m.description.toLowerCase().includes(q) ||
+      m.specialty.toLowerCase().includes(q)
+    );
+  }, [mentors, searchQuery]);
 
   const handleChat = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -78,34 +90,42 @@ export const Mentorship: React.FC<MentorshipProps> = ({ profile, cachedData, onU
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {mentors.map((mentor, idx) => (
-            <div key={idx} className="glass p-6 rounded-3xl border border-white/5 hover:border-emerald-500/30 transition-all bg-zinc-900/40 group flex flex-col">
-              <div className="flex items-center gap-4 mb-4">
-                <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
-                  👤
+        <>
+          {filteredMentors.length === 0 ? (
+             <div className="py-20 text-center glass rounded-2xl border-dashed">
+                <p className="text-zinc-500">No mentors found for "{searchQuery}"</p>
+             </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {filteredMentors.map((mentor, idx) => (
+                <div key={idx} className="glass p-6 rounded-3xl border border-white/5 hover:border-emerald-500/30 transition-all bg-zinc-900/40 group flex flex-col">
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
+                      👤
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-lg group-hover:text-emerald-400 transition-colors">{mentor.name}</h3>
+                      <div className="text-xs text-emerald-500 font-bold uppercase tracking-widest">{mentor.role}</div>
+                    </div>
+                  </div>
+                  <p className="text-sm text-zinc-400 mb-4 flex-1">{mentor.description}</p>
+                  <div className="flex items-center justify-between mt-auto pt-4 border-t border-white/5">
+                    <span className="text-xs text-zinc-500 italic">Focus: {mentor.specialty}</span>
+                    <button 
+                      onClick={() => {
+                        setSelectedMentor(mentor);
+                        setChatHistory([]);
+                      }}
+                      className="px-4 py-2 bg-zinc-800 hover:bg-emerald-500 hover:text-black font-bold text-xs rounded-xl transition-all"
+                    >
+                      {t('startChat')}
+                    </button>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="font-bold text-lg group-hover:text-emerald-400 transition-colors">{mentor.name}</h3>
-                  <div className="text-xs text-emerald-500 font-bold uppercase tracking-widest">{mentor.role}</div>
-                </div>
-              </div>
-              <p className="text-sm text-zinc-400 mb-4 flex-1">{mentor.description}</p>
-              <div className="flex items-center justify-between mt-auto pt-4 border-t border-white/5">
-                <span className="text-xs text-zinc-500 italic">Focus: {mentor.specialty}</span>
-                <button 
-                  onClick={() => {
-                    setSelectedMentor(mentor);
-                    setChatHistory([]);
-                  }}
-                  className="px-4 py-2 bg-zinc-800 hover:bg-emerald-500 hover:text-black font-bold text-xs rounded-xl transition-all"
-                >
-                  {t('startChat')}
-                </button>
-              </div>
+              ))}
             </div>
-          ))}
-        </div>
+          )}
+        </>
       )}
 
       {/* Chat Overlay */}
@@ -138,7 +158,7 @@ export const Mentorship: React.FC<MentorshipProps> = ({ profile, cachedData, onU
                 )}
                 {chatHistory.map((msg, i) => (
                   <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`max-w-[80%] px-4 py-3 rounded-2xl text-sm leading-relaxed ${
+                    <div className={`max-w-[80%] px-4 py-3 rounded-2xl text-sm leading-relaxed shadow-sm ${
                       msg.role === 'user' 
                         ? 'bg-emerald-500 text-black font-medium' 
                         : 'bg-zinc-800/80 text-zinc-100 border border-white/5'

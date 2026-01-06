@@ -7,6 +7,8 @@ export interface StudentProfile {
   interests: string[];
   internetAccess: 'Low' | 'Moderate' | 'High';
   preferredLanguage: string;
+  avatar?: string;
+  theme?: 'dark' | 'light';
 }
 
 export interface RoadmapStep {
