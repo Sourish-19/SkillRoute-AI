@@ -10,6 +10,8 @@ import { ProfilePage } from './components/ProfilePage';
 import { AnalysisForm } from './components/AnalysisForm';
 import { LandingPage } from './components/LandingPage';
 import { Auth } from './components/Auth';
+import ScrollToTop from './components/ScrollToTop';
+import TargetCursor from './components/TargetCursor';
 import { TranslationProvider, SupportedLanguage } from './components/TranslationContext';
 import { StudentProfile, Roadmap, LocalOpportunity } from './types';
 
@@ -69,7 +71,16 @@ export default function App() {
 
   return (
     <TranslationProvider language={currentLang}>
-      <div className="bg-[#09090b] text-zinc-100">
+      {/* Visual Enhancements */}
+      <TargetCursor 
+        spinDuration={4}
+        hideDefaultCursor={true}
+        parallaxOn={true}
+        targetSelector=".cursor-target"
+      />
+      <ScrollToTop watch={`${view}-${activeTab}`} />
+      
+      <div className="bg-[#09090b] text-zinc-100 min-h-screen">
         {view === 'landing' && (
           <LandingPage onStart={() => setView('auth')} />
         )}

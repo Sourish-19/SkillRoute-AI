@@ -15,7 +15,8 @@
     "recharts": "^3.6.0",
     "motion": "12.4.2",
     "three": "0.172.0",
-    "postprocessing": "6.36.6"
+    "postprocessing": "6.36.6",
+    "gsap": "3.12.5"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",

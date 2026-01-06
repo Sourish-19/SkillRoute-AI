@@ -27,14 +27,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobileOpen, activeTa
   const SidebarContent = ({ isMobile = false }) => (
     <div className={`h-full flex flex-col ${isMobile ? 'w-full' : ''}`}>
       <div className="p-6 flex items-center justify-between">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 cursor-target">
           <div className="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center font-bold text-black text-xl shadow-lg shadow-emerald-500/20">
             S
           </div>
           {(isOpen || isMobile) && <h1 className="font-bold text-xl tracking-tight">SkillRoute <span className="text-emerald-500">AI</span></h1>}
         </div>
         {isMobile && (
-          <button onClick={onCloseMobile} className="p-2 text-zinc-400 hover:text-white">✕</button>
+          <button onClick={onCloseMobile} className="cursor-target p-2 text-zinc-400 hover:text-white">✕</button>
         )}
       </div>
 
@@ -46,7 +46,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobileOpen, activeTa
           <button
             key={item.id}
             onClick={() => onTabChange(item.id)}
-            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all ${
+            className={`cursor-target w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all ${
               activeTab === item.id 
                 ? 'bg-emerald-500/10 text-emerald-500 font-medium border border-emerald-500/20' 
                 : 'text-zinc-400 hover:bg-zinc-800/50 hover:text-zinc-100'
@@ -62,7 +62,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobileOpen, activeTa
         {onLogout && (
           <button
             onClick={onLogout}
-            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-zinc-400 hover:bg-red-500/10 hover:text-red-400`}
+            className={`cursor-target w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-zinc-400 hover:bg-red-500/10 hover:text-red-400`}
           >
             <span className="text-xl">🚪</span>
             {(isOpen || isMobile) && <span>{t('signOut')}</span>}

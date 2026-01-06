@@ -1,6 +1,6 @@
 
-import React, { useMemo } from 'react';
-import { motion } from 'motion/react';
+import React, { useMemo, useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import BlurText from './BlurText';
 import CurvedLoop from './CurvedLoop';
 import Hyperspeed from './Hyperspeed';
@@ -10,6 +10,16 @@ interface LandingPageProps {
 }
 
 export const LandingPage: React.FC<LandingPageProps> = ({ onStart }) => {
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 100);
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   const hyperspeedOptions = useMemo(() => ({
     distortion: 'turbulentDistortion',
     length: 400,
@@ -33,49 +43,91 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStart }) => {
 
   return (
     <div className="min-h-screen bg-[#09090b] text-white selection:bg-emerald-500/30 relative">
-      {/* Global Cinematic Background (Hyperspeed) */}
       <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
         <div className="absolute inset-0 opacity-40">
            <Hyperspeed effectOptions={hyperspeedOptions} />
         </div>
-        {/* Deep Gradient Overlays for Readability and Depth */}
         <div className="absolute inset-0 bg-gradient-to-b from-[#09090b] via-transparent to-[#09090b] opacity-80" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,#09090b_90%)]" />
       </div>
 
-      {/* Content Container - Relative and Z-indexed to sit above the fixed background */}
       <div className="relative z-10">
-        {/* Navbar - Fixed Z-Index to z-50 to stay above everything */}
-        <nav className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between bg-[#09090b]/60 backdrop-blur-xl sticky top-0 border-b border-white/5 z-50">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center font-bold text-black">S</div>
-            <span className="text-xl font-bold tracking-tight">SkillRoute <span className="text-emerald-500">AI</span></span>
-          </div>
-          <div className="hidden md:flex items-center gap-8 text-sm font-medium text-zinc-400">
-            <a href="#" className="hover:text-white transition-colors">Dashboard</a>
-            <a href="#" className="hover:text-white transition-colors">Resources</a>
-            <a href="#" className="hover:text-white transition-colors">Pricing</a>
-            <a href="#" className="hover:text-white transition-colors">Contact</a>
-          </div>
-          <div className="flex items-center gap-4">
-            <button onClick={onStart} className="text-sm font-medium text-zinc-300 hover:text-white transition-colors">Log in</button>
-            <motion.button 
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={onStart} 
-              className="px-5 py-2.5 bg-zinc-100 hover:bg-white text-zinc-900 font-bold text-sm rounded-xl transition-colors shadow-lg shadow-white/10"
-            >
-              Sign Up
-            </motion.button>
-          </div>
-        </nav>
-
-        {/* Hero Section */}
-        <section className="max-w-7xl mx-auto px-6 pt-32 pb-40 min-h-[85vh] flex items-center justify-center">
-          <div className="text-center max-w-4xl mx-auto space-y-10 flex flex-col items-center">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-emerald-500/20 bg-emerald-500/10 backdrop-blur-sm text-emerald-400 text-xs font-bold uppercase tracking-widest mb-4">
-              ✨ The Future of Career Guidance
+        <div className="fixed top-0 left-0 w-full z-50 flex justify-center pointer-events-none">
+          <motion.nav 
+            initial={false}
+            animate={{ 
+              width: isScrolled ? 'auto' : '100%',
+              maxWidth: isScrolled ? '600px' : '1280px',
+              y: isScrolled ? 20 : 0,
+              paddingLeft: isScrolled ? '1.5rem' : '2rem',
+              paddingRight: isScrolled ? '1.5rem' : '2rem',
+            }}
+            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+            className={`pointer-events-auto h-16 md:h-20 flex items-center justify-between border-b transition-all duration-500 overflow-hidden ${
+              isScrolled 
+                ? 'bg-zinc-900/80 border-emerald-500/30 rounded-full backdrop-blur-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)]' 
+                : 'bg-transparent border-transparent'
+            }`}
+          >
+            <div className="flex items-center gap-3 cursor-target">
+              <motion.div 
+                animate={{ 
+                  scale: isScrolled ? 0.85 : 1,
+                  rotate: isScrolled ? 360 : 0
+                }}
+                className="w-8 h-8 md:w-10 md:h-10 bg-emerald-500 rounded-xl flex items-center justify-center font-bold text-black shadow-lg"
+              >
+                S
+              </motion.div>
+              <AnimatePresence mode="popLayout">
+                {!isScrolled && (
+                  <motion.span 
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -10 }}
+                    className="text-xl font-bold tracking-tight"
+                  >
+                    SkillRoute <span className="text-emerald-500">AI</span>
+                  </motion.span>
+                )}
+              </AnimatePresence>
             </div>
+            
+            <div className="flex items-center gap-2 md:gap-4">
+              <button 
+                onClick={onStart} 
+                className={`cursor-target text-sm font-medium transition-colors ${
+                  isScrolled ? 'text-zinc-400 hover:text-white px-2' : 'text-zinc-300 hover:text-white'
+                }`}
+              >
+                Log in
+              </button>
+              
+              <motion.button 
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                animate={{ 
+                  scale: isScrolled ? 0.9 : 1,
+                }}
+                onClick={onStart} 
+                className="cursor-target bg-zinc-100 hover:bg-white text-zinc-900 font-bold text-sm px-4 md:px-6 py-2 md:py-2.5 rounded-full md:rounded-xl transition-all shadow-lg shadow-white/10 whitespace-nowrap"
+              >
+                {isScrolled ? 'Join' : 'Sign Up'}
+              </motion.button>
+            </div>
+          </motion.nav>
+        </div>
+
+        <section className="max-w-7xl mx-auto px-6 pt-48 pb-40 min-h-[90vh] flex items-center justify-center">
+          <div className="text-center max-w-4xl mx-auto space-y-10 flex flex-col items-center">
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-emerald-500/20 bg-emerald-500/10 backdrop-blur-sm text-emerald-400 text-xs font-bold uppercase tracking-widest mb-4"
+            >
+              ✨ The Future of Career Guidance
+            </motion.div>
             
             <BlurText
               text="The Career Navigation Engine for Tier-2 & Tier-3 Students."
@@ -85,9 +137,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStart }) => {
               className="text-6xl lg:text-7xl font-extrabold tracking-tight leading-[1.05] text-center justify-center drop-shadow-2xl"
             />
 
-            <p className="text-xl text-zinc-400 leading-relaxed max-w-2xl mx-auto mt-6">
+            <motion.p 
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              transition={{ delay: 0.5 }}
+              className="text-xl text-zinc-400 leading-relaxed max-w-2xl mx-auto mt-6"
+            >
               Personalized learning, local job matching, and mentorship to launch your career, regardless of your location or infrastructure constraints.
-            </p>
+            </motion.p>
             
             <div className="flex flex-wrap items-center justify-center gap-6 mt-10">
               <motion.button 
@@ -98,7 +155,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStart }) => {
                 whileTap={{ scale: 0.98 }}
                 transition={{ type: "spring", stiffness: 400, damping: 10 }}
                 onClick={onStart}
-                className="px-10 py-5 bg-emerald-500 hover:bg-emerald-400 text-black font-bold text-lg rounded-2xl transition-colors shadow-[0_0_40px_rgba(16,185,129,0.3)] relative overflow-hidden group"
+                className="cursor-target px-10 py-5 bg-emerald-500 hover:bg-emerald-400 text-black font-bold text-lg rounded-2xl transition-colors shadow-[0_0_40px_rgba(16,185,129,0.3)] relative overflow-hidden group"
               >
                 <span className="relative z-10">Sign Up for Free</span>
                 <motion.div 
@@ -108,15 +165,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStart }) => {
                   className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent z-0"
                 />
               </motion.button>
-              <button className="flex items-center gap-3 text-sm font-bold hover:text-emerald-400 transition-colors group">
-                <span className="w-12 h-12 flex items-center justify-center rounded-full border border-zinc-800 bg-zinc-900/40 group-hover:border-emerald-500 transition-colors">▶</span>
-                Watch Demo
-              </button>
             </div>
           </div>
         </section>
 
-        {/* Branding Marquee */}
         <div className="relative border-y border-white/5 bg-[#09090b]/20 backdrop-blur-sm overflow-hidden">
           <CurvedLoop 
             marqueeText="✦ NAVIGATE YOUR CAREER ✦ LOCAL OPPORTUNITIES ✦ SKILLROUTE AI ✦ BREAKING BARRIERS ✦ EMPOWERING TIER-2 & TIER-3 ✦"
@@ -126,7 +178,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStart }) => {
           />
         </div>
 
-        {/* Features Section */}
         <section className="py-32 relative">
           <div className="max-w-7xl mx-auto px-6">
             <div className="text-center mb-20 flex flex-col items-center">
@@ -164,7 +215,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStart }) => {
           </div>
         </section>
 
-        {/* How it Works Section */}
         <section className="py-32 bg-[#09090b]/40 backdrop-blur-sm border-y border-white/5">
           <div className="max-w-7xl mx-auto px-6 text-center">
             <BlurText
@@ -203,7 +253,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStart }) => {
           </div>
         </section>
 
-        {/* Testimonials Section */}
         <section className="py-32 overflow-hidden">
           <div className="max-w-7xl mx-auto px-6">
             <BlurText
@@ -230,7 +279,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStart }) => {
           </div>
         </section>
 
-        {/* Footer */}
         <footer className="bg-[#09090b]/80 backdrop-blur-xl pt-20 pb-10 border-t border-white/5">
           <div className="max-w-7xl mx-auto px-6 grid md:grid-cols-4 gap-12 mb-20">
             <div className="col-span-1 md:col-span-2 space-y-4">
@@ -243,18 +291,18 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStart }) => {
             <div>
               <h4 className="font-bold mb-6 text-zinc-100">About</h4>
               <ul className="space-y-4 text-zinc-500 text-sm">
-                <li><a href="#" className="hover:text-emerald-500 transition-colors">About Us</a></li>
-                <li><a href="#" className="hover:text-emerald-500 transition-colors">Company</a></li>
-                <li><a href="#" className="hover:text-emerald-500 transition-colors">Careers</a></li>
-                <li><a href="#" className="hover:text-emerald-500 transition-colors">Contact Us</a></li>
+                <li><a href="#" className="cursor-target hover:text-emerald-500 transition-colors">About Us</a></li>
+                <li><a href="#" className="cursor-target hover:text-emerald-500 transition-colors">Company</a></li>
+                <li><a href="#" className="cursor-target hover:text-emerald-500 transition-colors">Careers</a></li>
+                <li><a href="#" className="cursor-target hover:text-emerald-500 transition-colors">Contact Us</a></li>
               </ul>
             </div>
             <div>
               <h4 className="font-bold mb-6 text-zinc-100">Contact</h4>
               <ul className="space-y-4 text-zinc-500 text-sm">
-                <li>Contact Us</li>
-                <li>Privacy Policy</li>
-                <li>Sitemap</li>
+                <li className="cursor-target hover:text-emerald-500">Contact Us</li>
+                <li className="cursor-target hover:text-emerald-500">Privacy Policy</li>
+                <li className="cursor-target hover:text-emerald-500">Sitemap</li>
               </ul>
             </div>
           </div>
@@ -266,7 +314,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStart }) => {
 };
 
 const FeatureCard: React.FC<{ icon: string; title: string; desc: string }> = ({ icon, title, desc }) => (
-  <div className="p-8 rounded-3xl bg-zinc-900/40 backdrop-blur-md border border-white/5 hover:border-emerald-500/30 transition-all hover:bg-zinc-800/50 group">
+  <div className="cursor-target p-8 rounded-3xl bg-zinc-900/40 backdrop-blur-md border border-white/5 hover:border-emerald-500/30 transition-all hover:bg-zinc-800/50 group">
     <div className="text-3xl mb-6 bg-emerald-500/10 w-14 h-14 rounded-2xl flex items-center justify-center border border-emerald-500/20 group-hover:scale-110 transition-transform">
       {icon}
     </div>
@@ -276,14 +324,14 @@ const FeatureCard: React.FC<{ icon: string; title: string; desc: string }> = ({ 
 );
 
 const StepItem: React.FC<{ number: number; title: string; desc: string; color?: string }> = ({ number, title, desc, color }) => (
-  <div className={`p-8 rounded-3xl border h-full ${color || 'border-white/5 bg-zinc-900/30 backdrop-blur-md'} text-left space-y-4 hover:scale-[1.02] transition-transform flex flex-col justify-center`}>
+  <div className={`cursor-target p-8 rounded-3xl border h-full ${color || 'border-white/5 bg-zinc-900/30 backdrop-blur-md'} text-left space-y-4 hover:scale-[1.02] transition-transform flex flex-col justify-center`}>
     <div className="text-emerald-500 text-sm font-bold tracking-widest leading-tight">{number}. {title.toUpperCase()}</div>
     <p className="text-zinc-400 text-sm leading-relaxed">{desc}</p>
   </div>
 );
 
 const TestimonialCard: React.FC<{ name: string; role: string; text: string; img: string }> = ({ name, role, text, img }) => (
-  <div className="bg-zinc-900/40 backdrop-blur-md p-8 rounded-3xl border border-white/5 flex gap-6 hover:bg-zinc-800/60 transition-colors">
+  <div className="cursor-target bg-zinc-900/40 backdrop-blur-md p-8 rounded-3xl border border-white/5 flex gap-6 hover:bg-zinc-800/60 transition-colors">
     <img src={img} alt={name} className="w-16 h-16 rounded-full border-2 border-zinc-800 shrink-0" />
     <div className="space-y-4">
       <p className="text-zinc-400 italic text-sm leading-relaxed">"{text}"</p>
