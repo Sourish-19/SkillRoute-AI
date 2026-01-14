@@ -9,7 +9,7 @@ const getAIModel = () => {
         throw new Error("API_KEY is missing");
     }
     const genAI = new GoogleGenerativeAI(process.env.API_KEY);
-    return genAI.getGenerativeModel({ model: "gemini-pro" });
+    return genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 };
 
 // Helper to wrap async routes
