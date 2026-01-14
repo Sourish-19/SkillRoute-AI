@@ -1,26 +1,25 @@
 import React from 'react';
 import { useTranslation } from './TranslationContext.tsx';
 import { motion, AnimatePresence } from 'motion/react';
+import { NavLink } from 'react-router-dom';
 
 interface SidebarProps {
   isOpen: boolean;
   isMobileOpen: boolean;
-  activeTab: string;
-  onTabChange: (tab: string) => void;
   onToggle: () => void;
   onCloseMobile: () => void;
   onLogout?: () => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobileOpen, activeTab, onTabChange, onCloseMobile, onLogout }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobileOpen, onCloseMobile, onLogout }) => {
   const { t } = useTranslation();
 
   const menuItems = [
-    { id: 'overview', label: t('dashboard'), icon: '📊' },
-    { id: 'roadmap', label: t('roadmap'), icon: '🗺️' },
-    { id: 'opportunities', label: t('localOpps'), icon: '📍' },
-    { id: 'mentorship', label: t('mentorship'), icon: '🤝' },
-    { id: 'profile', label: t('settings'), icon: '⚙️' },
+    { id: 'overview', label: t('dashboard'), icon: '📊', path: '/dashboard/overview' },
+    { id: 'roadmap', label: t('roadmap'), icon: '🗺️', path: '/dashboard/roadmap' },
+    { id: 'opportunities', label: t('localOpps'), icon: '📍', path: '/dashboard/opportunities' },
+    { id: 'mentorship', label: t('mentorship'), icon: '🤝', path: '/dashboard/mentorship' },
+    { id: 'profile', label: t('settings'), icon: '⚙️', path: '/dashboard/profile' },
   ];
 
   const SidebarContent = ({ isMobile = false }) => (
@@ -42,18 +41,18 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobileOpen, activeTa
           {(isOpen || isMobile) ? 'Main Navigation' : '•'}
         </div>
         {menuItems.map((item) => (
-          <button
+          <NavLink
             key={item.id}
-            onClick={() => onTabChange(item.id)}
-            className={`cursor-target w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all ${
-              activeTab === item.id 
-                ? 'bg-emerald-500/10 text-emerald-500 font-medium border border-emerald-500/20' 
+            to={item.path}
+            onClick={() => isMobile && onCloseMobile()}
+            className={({ isActive }) => `cursor-target w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all ${isActive
+                ? 'bg-emerald-500/10 text-emerald-500 font-medium border border-emerald-500/20'
                 : 'text-zinc-400 hover:bg-zinc-800/50 hover:text-zinc-100'
-            }`}
+              }`}
           >
             <span className="text-xl">{item.icon}</span>
             {(isOpen || isMobile) && <span>{item.label}</span>}
-          </button>
+          </NavLink>
         ))}
       </nav>
 
@@ -82,14 +81,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobileOpen, activeTa
       <AnimatePresence>
         {isMobileOpen && (
           <div className="fixed inset-0 z-[100] md:hidden">
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={onCloseMobile}
-              className="absolute inset-0 bg-black/60 backdrop-blur-sm" 
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
             />
-            <motion.aside 
+            <motion.aside
               initial={{ x: '-100%' }}
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
