@@ -4,7 +4,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import authRoutes from './routes/auth.js';
 import geminiRoutes from './routes/gemini.js';
-import { getDb } from './db.js';
+import { connectDB } from './db.js';
 
 dotenv.config();
 
@@ -24,10 +24,8 @@ app.get('/', (req, res) => {
 });
 
 // Initialize DB and start server
-getDb().then(() => {
+connectDB().then(() => {
     app.listen(PORT, () => {
         console.log(`Server running on port ${PORT}`);
     });
-}).catch(err => {
-    console.error('Failed to initialize database', err);
 });
