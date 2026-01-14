@@ -19,10 +19,19 @@ export const api = {
 
         if (!response.ok) {
             if (response.status === 401 || response.status === 403) {
-                // Handle logout if needed or throw specific error
+                // Handle logout if needed
             }
-            const error = await response.json().catch(() => ({ error: 'Unknown error' }));
-            const errorMessage = error.details || error.error || 'API Request Failed';
+
+            let errorMessage = 'API Request Failed';
+            try {
+                const errorData = await response.json();
+                errorMessage = errorData.details || errorData.error || errorData.message || errorMessage;
+            } catch (e) {
+                // If response is not JSON (e.g. 500 HTML page from Render/Vercel)
+                errorMessage = `Server Error (${response.status}): ${response.statusText}`;
+            }
+
+            console.error(`API Error [${endpoint}]:`, errorMessage);
             throw new Error(errorMessage);
         }
 
