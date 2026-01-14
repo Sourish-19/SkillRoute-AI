@@ -14,9 +14,8 @@ This guide covers how to deploy the **SkillRoute-AI** full-stack application.
 2. Create a new Cluster (M0 Sandbox is free).
 3. In **Database Access**, create a user (e.g., `admin`) and password.
 4. In **Network Access**, allow access from anywhere (`0.0.0.0/0`).
-5. Click **Connect** > **Drivers** to get your connection string.
-   - It looks like: `mongodb+srv://admin:<password>@cluster0.abcde.mongodb.net/?retryWrites=true&w=majority`
-   - *Save this for later.*
+   - ⚠️ **CRITICAL STEP**: If you skip this, Render cannot connect to your database, and the app will crash with an Auth Error.
+5. Click **Confirm**.
 
 ### 🔑 Google Gemini API Key
 1. Go to [Google AI Studio](https://aistudio.google.com/).
