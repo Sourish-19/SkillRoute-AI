@@ -22,7 +22,8 @@ export const api = {
                 // Handle logout if needed or throw specific error
             }
             const error = await response.json().catch(() => ({ error: 'Unknown error' }));
-            throw new Error(error.error || 'API Request Failed');
+            const errorMessage = error.details || error.error || 'API Request Failed';
+            throw new Error(errorMessage);
         }
 
         return response.json();

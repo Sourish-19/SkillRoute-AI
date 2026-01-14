@@ -33,6 +33,9 @@ export interface LocalOpportunity {
   location: string;
   matchScore: number;
   description: string;
+  requirements?: string[];
+  stipend?: string;
+  duration?: string;
 }
 
 export interface SkillMetric {

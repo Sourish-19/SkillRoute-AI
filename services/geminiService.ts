@@ -17,3 +17,7 @@ export const getMentorAdvice = async (profile: StudentProfile, mentorName: strin
 export const suggestMentors = async (profile: StudentProfile) => {
   return api.post('/gemini/mentors', { profile });
 };
+
+export const chatWithAI = async (message: string, history: Array<{ role: string, content: string }>, profile?: any) => {
+  return api.post('/gemini/chat', { message, history, profile });
+};

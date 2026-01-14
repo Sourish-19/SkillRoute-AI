@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation, Outlet, useNavigate } from 'react-router-dom';
 import { Sidebar } from './components/Sidebar.tsx';
-import { Header } from './components/Header.tsx';
+
 import { Overview } from './components/Overview.tsx';
 import { RoadmapBuilder } from './components/RoadmapBuilder.tsx';
 import { LocalOpportunitiesFeed } from './components/LocalOpportunitiesFeed.tsx';
@@ -14,6 +14,7 @@ import ScrollToTop from './components/ScrollToTop.tsx';
 import TargetCursor from './components/TargetCursor.tsx';
 import { TranslationProvider, SupportedLanguage } from './components/TranslationContext.tsx';
 import { StudentProfile, Roadmap, LocalOpportunity } from './types.ts';
+import { ChatAssistant } from './components/ChatAssistant.tsx';
 
 // Main Application Layout (Authenticated)
 const DashboardLayout = ({
@@ -47,12 +48,15 @@ const DashboardLayout = ({
       />
 
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
-        <Header
-          profile={profile}
-          onSearch={() => { }} // Search needs context lift or url param
-          onOpenProfile={() => navigate('profile')} // Navigation handled by router now
-          onToggleSidebar={() => setIsMobileSidebarOpen(true)}
-        />
+        {/* Mobile Toggle (Floating) */}
+        <button
+          onClick={() => setIsMobileSidebarOpen(true)}
+          className="md:hidden absolute top-4 left-4 z-50 p-2 text-zinc-400 hover:text-white bg-zinc-900/50 rounded-lg backdrop-blur-sm"
+        >
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
 
         <div className="flex-1 overflow-y-auto p-4 md:p-8 relative z-10">
           <div className="max-w-7xl mx-auto space-y-8">
@@ -60,6 +64,8 @@ const DashboardLayout = ({
           </div>
         </div>
       </main>
+
+      <ChatAssistant profile={profile} />
     </div>
   );
 };

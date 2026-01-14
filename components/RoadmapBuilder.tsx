@@ -14,15 +14,18 @@ export const RoadmapBuilder: React.FC<RoadmapBuilderProps> = ({ profile, cachedD
   const { t } = useTranslation();
   const [roadmap, setRoadmap] = useState<Roadmap | null>(cachedData);
   const [isLoading, setIsLoading] = useState(!cachedData);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchRoadmap = async () => {
     setIsLoading(true);
+    setError(null);
     try {
       const result = await generateRoadmap(profile);
       setRoadmap(result);
       onUpdate(result);
-    } catch (error) {
-      console.error("Failed to generate roadmap", error);
+    } catch (err: any) {
+      console.error("Failed to generate roadmap", err);
+      setError(err.message || "Failed to generate roadmap");
     } finally {
       setIsLoading(false);
     }
@@ -38,14 +41,15 @@ export const RoadmapBuilder: React.FC<RoadmapBuilderProps> = ({ profile, cachedD
     if (!roadmap) return [];
     if (!searchQuery) return roadmap.steps;
     const q = searchQuery.toLowerCase();
-    return roadmap.steps.filter(s => 
-      s.topic.toLowerCase().includes(q) || 
+    return roadmap.steps.filter(s =>
+      s.topic.toLowerCase().includes(q) ||
       s.description.toLowerCase().includes(q) ||
       s.tasks.some(task => task.toLowerCase().includes(q))
     );
   }, [roadmap, searchQuery]);
 
   if (isLoading) {
+    // ... existing spinner ...
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center space-y-4">
         <div className="w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
@@ -53,6 +57,17 @@ export const RoadmapBuilder: React.FC<RoadmapBuilderProps> = ({ profile, cachedD
           <h3 className="text-xl font-bold">Designing Your Path...</h3>
           <p className="text-zinc-500 max-w-sm">SkillRoute AI is analyzing your local constraints and market trends to create a custom 8-week plan.</p>
         </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-center space-y-4">
+        <div className="text-red-500 text-5xl">⚠️</div>
+        <h3 className="text-xl font-bold text-red-500">Generation Failed</h3>
+        <p className="text-zinc-400 max-w-md">{error}</p>
+        <button onClick={fetchRoadmap} className="px-6 py-2 bg-zinc-800 rounded-xl hover:bg-zinc-700">Try Again</button>
       </div>
     );
   }
@@ -66,7 +81,7 @@ export const RoadmapBuilder: React.FC<RoadmapBuilderProps> = ({ profile, cachedD
           <h2 className="text-3xl font-bold mb-2">{t('roadmap')}</h2>
           <p className="text-zinc-400">{t('targetGoal')}: <span className="text-emerald-500 font-medium">{roadmap.goal}</span></p>
         </div>
-        <button 
+        <button
           onClick={fetchRoadmap}
           className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-sm font-medium rounded-xl transition-colors border border-zinc-700"
         >
@@ -88,10 +103,9 @@ export const RoadmapBuilder: React.FC<RoadmapBuilderProps> = ({ profile, cachedD
 
               <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] glass p-6 rounded-2xl hover:bg-zinc-900/80 transition-all border border-zinc-800 group-hover:border-emerald-500/30">
                 <div className="flex items-center justify-between mb-3">
-                  <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
-                    step.resourceType === 'Local' ? 'bg-blue-500/20 text-blue-400' : 
+                  <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${step.resourceType === 'Local' ? 'bg-blue-500/20 text-blue-400' :
                     step.resourceType === 'Online' ? 'bg-purple-500/20 text-purple-400' : 'bg-orange-500/20 text-orange-400'
-                  }`}>
+                    }`}>
                     {step.resourceType}
                   </span>
                   <span className="text-xs text-zinc-500">Week {step.week}</span>
