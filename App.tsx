@@ -96,8 +96,8 @@ function ScrollToTopWrapper() {
 export default function App() {
   const [profile, setProfile] = useState<StudentProfile | null>(null);
   const [user, setUser] = useState<{ email: string } | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [heroVisible, setHeroVisible] = useState(false);
+  const [loading, setLoading] = useState(window.location.pathname === '/');
+  const [heroVisible, setHeroVisible] = useState(window.location.pathname !== '/');
 
   // Caching state (Consider moving to React Query or Context later)
   const [roadmap, setRoadmap] = useState<Roadmap | null>(null);
