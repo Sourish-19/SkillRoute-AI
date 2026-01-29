@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import { StudentProfile } from '../types.ts';
 import { useTranslation } from './TranslationContext.tsx';
 
@@ -14,6 +14,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ profile, userEmail, on
   const { t } = useTranslation();
   const [editedProfile, setEditedProfile] = useState<StudentProfile>({ ...profile });
   const [editedEmail, setEditedEmail] = useState(userEmail);
+  const [isLangOpen, setIsLangOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'success'>('idle');
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -47,14 +48,13 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ profile, userEmail, on
           <h2 className="text-4xl font-black text-white mb-2 tracking-tight">{t('profileSettings')}</h2>
           <p className="text-zinc-500">Manage your account credentials and professional route details.</p>
         </div>
-        <button 
+        <button
           onClick={handleSave}
           disabled={isSaving}
-          className={`px-8 py-3 rounded-2xl font-bold transition-all flex items-center gap-2 ${
-            saveStatus === 'success' 
-              ? 'bg-emerald-500 text-black shadow-lg shadow-emerald-500/20' 
-              : 'bg-white text-black hover:bg-zinc-200'
-          }`}
+          className={`px-8 py-3 rounded-2xl font-bold transition-all flex items-center gap-2 ${saveStatus === 'success'
+            ? 'bg-emerald-500 text-black shadow-lg shadow-emerald-500/20'
+            : 'bg-white text-black hover:bg-zinc-200'
+            }`}
         >
           {isSaving ? t('saving') : saveStatus === 'success' ? `✓ ${t('saved')}` : t('saveChanges')}
         </button>
@@ -64,38 +64,38 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ profile, userEmail, on
         {/* Profile Picture & Basic Info */}
         <div className="space-y-8">
           <section className="glass p-8 rounded-[2rem] border-white/5 bg-zinc-900/40 text-center">
-             <div className="relative inline-block group mb-6">
-                <div className="w-32 h-32 rounded-full overflow-hidden bg-zinc-800 border-4 border-zinc-800 group-hover:border-emerald-500 transition-all shadow-2xl">
-                  {editedProfile.avatar ? (
-                    <img src={editedProfile.avatar} alt="Avatar" className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-4xl">👤</div>
-                  )}
-                </div>
-                <button 
-                  onClick={() => fileInputRef.current?.click()}
-                  className="absolute bottom-1 right-1 w-10 h-10 bg-emerald-500 text-black rounded-full flex items-center justify-center border-4 border-zinc-900 group-hover:scale-110 transition-transform shadow-lg"
-                >
-                  📷
-                </button>
-                <input 
-                  type="file" 
-                  ref={fileInputRef} 
-                  className="hidden" 
-                  accept="image/*" 
-                  onChange={handleFileChange} 
-                />
-             </div>
-             <div>
-                <h4 className="text-xl font-bold">{editedProfile.name}</h4>
-                <p className="text-zinc-500 text-sm">{editedProfile.education}</p>
-             </div>
-             <button 
-               onClick={() => fileInputRef.current?.click()}
-               className="mt-6 w-full py-2 bg-zinc-800 hover:bg-zinc-700 rounded-xl text-xs font-bold uppercase tracking-widest transition-colors"
-             >
-               {t('uploadPhoto')}
-             </button>
+            <div className="relative inline-block group mb-6">
+              <div className="w-32 h-32 rounded-full overflow-hidden bg-zinc-800 border-4 border-zinc-800 group-hover:border-emerald-500 transition-all shadow-2xl">
+                {editedProfile.avatar ? (
+                  <img src={editedProfile.avatar} alt="Avatar" className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-4xl">👤</div>
+                )}
+              </div>
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="absolute bottom-1 right-1 w-10 h-10 bg-emerald-500 text-black rounded-full flex items-center justify-center border-4 border-zinc-900 group-hover:scale-110 transition-transform shadow-lg"
+              >
+                📷
+              </button>
+              <input
+                type="file"
+                ref={fileInputRef}
+                className="hidden"
+                accept="image/*"
+                onChange={handleFileChange}
+              />
+            </div>
+            <div>
+              <h4 className="text-xl font-bold">{editedProfile.name}</h4>
+              <p className="text-zinc-500 text-sm">{editedProfile.education}</p>
+            </div>
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="mt-6 w-full py-2 bg-zinc-800 hover:bg-zinc-700 rounded-xl text-xs font-bold uppercase tracking-widest transition-colors"
+            >
+              {t('uploadPhoto')}
+            </button>
           </section>
 
           <section className="glass p-8 rounded-[2rem] border-white/5 bg-zinc-900/40">
@@ -105,26 +105,56 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ profile, userEmail, on
             <div className="space-y-6">
               <div className="space-y-2">
                 <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest ml-1">City / Location</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   value={editedProfile.location}
-                  onChange={e => setEditedProfile({...editedProfile, location: e.target.value})}
+                  onChange={e => setEditedProfile({ ...editedProfile, location: e.target.value })}
                   className="w-full bg-zinc-900 border border-white/5 rounded-xl px-4 py-3 focus:ring-2 focus:ring-emerald-500/50 outline-none transition-all"
                 />
               </div>
 
               <div className="space-y-3">
                 <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest ml-1">Preferred UI Language</label>
-                <select 
-                  value={editedProfile.preferredLanguage}
-                  onChange={e => setEditedProfile({...editedProfile, preferredLanguage: e.target.value})}
-                  className="w-full bg-zinc-900 border border-white/5 rounded-xl px-4 py-3 focus:ring-2 focus:ring-emerald-500/50 outline-none text-zinc-300 font-bold"
-                >
-                  {['English', 'Hindi', 'Tamil', 'Telugu', 'Marathi', 'Bengali'].map(lang => (
-                    <option key={lang} value={lang}>{lang}</option>
-                  ))}
-                </select>
-                <p className="text-[10px] text-emerald-500/60 ml-1 italic">Changing this updates the whole interface instantly.</p>
+                <div className="relative">
+                  <button
+                    onClick={() => setIsLangOpen(!isLangOpen)}
+                    onBlur={() => setTimeout(() => setIsLangOpen(false), 200)}
+                    className="w-full bg-zinc-900 border border-white/5 rounded-xl px-4 py-3 text-left flex items-center justify-between group focus:ring-2 focus:ring-emerald-500/50 outline-none transition-all"
+                  >
+                    <span className="font-bold text-zinc-300">{editedProfile.preferredLanguage || 'English'}</span>
+                    <span className={`text-zinc-500 transition-transform duration-300 ${isLangOpen ? 'rotate-180' : ''}`}>▼</span>
+                  </button>
+
+                  <AnimatePresence>
+                    {isLangOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                        transition={{ duration: 0.2 }}
+                        className="absolute top-full left-0 right-0 mt-2 bg-zinc-900 border border-white/10 rounded-xl shadow-2xl overflow-hidden z-50 p-1"
+                      >
+                        {['English', 'Hindi', 'Tamil', 'Telugu', 'Marathi', 'Bengali'].map(lang => (
+                          <button
+                            key={lang}
+                            onClick={() => {
+                              setEditedProfile({ ...editedProfile, preferredLanguage: lang });
+                              setIsLangOpen(false);
+                            }}
+                            className={`w-full text-left px-4 py-3 rounded-lg font-medium transition-colors flex items-center justify-between ${editedProfile.preferredLanguage === lang
+                              ? 'bg-emerald-500/20 text-emerald-400'
+                              : 'text-zinc-400 hover:bg-zinc-800 hover:text-white'
+                              }`}
+                          >
+                            {lang}
+                            {editedProfile.preferredLanguage === lang && <span>✓</span>}
+                          </button>
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+                <p className="text-[10px] text-emerald-500/60 ml-1 italic mt-2">Changing this updates the whole interface instantly.</p>
               </div>
             </div>
           </section>
@@ -139,17 +169,17 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ profile, userEmail, on
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest ml-1">Full Name</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   value={editedProfile.name}
-                  onChange={e => setEditedProfile({...editedProfile, name: e.target.value})}
+                  onChange={e => setEditedProfile({ ...editedProfile, name: e.target.value })}
                   className="w-full bg-zinc-900 border border-white/5 rounded-xl px-4 py-3 focus:ring-2 focus:ring-emerald-500/50 outline-none transition-all"
                 />
               </div>
               <div className="space-y-2">
                 <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest ml-1">Email Address</label>
-                <input 
-                  type="email" 
+                <input
+                  type="email"
                   value={editedEmail}
                   onChange={e => setEditedEmail(e.target.value)}
                   className="w-full bg-zinc-900 border border-white/5 rounded-xl px-4 py-3 focus:ring-2 focus:ring-emerald-500/50 outline-none transition-all"
@@ -165,19 +195,19 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ profile, userEmail, on
             <div className="space-y-6">
               <div className="space-y-2">
                 <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest ml-1">Current Education / Role</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   value={editedProfile.education}
-                  onChange={e => setEditedProfile({...editedProfile, education: e.target.value})}
+                  onChange={e => setEditedProfile({ ...editedProfile, education: e.target.value })}
                   className="w-full bg-zinc-900 border border-white/5 rounded-xl px-4 py-3 focus:ring-2 focus:ring-emerald-500/50 outline-none transition-all"
                 />
               </div>
               <div className="space-y-2">
                 <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest ml-1">Skills (comma separated)</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   value={editedProfile.skills.join(', ')}
-                  onChange={e => setEditedProfile({...editedProfile, skills: e.target.value.split(',').map(s => s.trim())})}
+                  onChange={e => setEditedProfile({ ...editedProfile, skills: e.target.value.split(',').map(s => s.trim()) })}
                   className="w-full bg-zinc-900 border border-white/5 rounded-xl px-4 py-3 focus:ring-2 focus:ring-emerald-500/50 outline-none transition-all"
                 />
               </div>

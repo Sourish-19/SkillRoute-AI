@@ -15,6 +15,7 @@ import TargetCursor from './components/TargetCursor.tsx';
 import { TranslationProvider, SupportedLanguage } from './components/TranslationContext.tsx';
 import { StudentProfile, Roadmap, LocalOpportunity } from './types.ts';
 import { ChatAssistant } from './components/ChatAssistant.tsx';
+import RevealLoader from './components/reveal-loader.tsx';
 
 // Main Application Layout (Authenticated)
 const DashboardLayout = ({
@@ -95,6 +96,8 @@ function ScrollToTopWrapper() {
 export default function App() {
   const [profile, setProfile] = useState<StudentProfile | null>(null);
   const [user, setUser] = useState<{ email: string } | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [heroVisible, setHeroVisible] = useState(false);
 
   // Caching state (Consider moving to React Query or Context later)
   const [roadmap, setRoadmap] = useState<Roadmap | null>(null);
@@ -144,6 +147,21 @@ export default function App() {
 
   return (
     <TranslationProvider language={currentLang}>
+      {loading && (
+        <RevealLoader
+          text="SKILLROUTE AI"
+          bgColors={["#059669", "#34d399", "#6ee7b7"]}
+          textColor="black"
+          textSize="8vw"
+          angle={90}
+          staggerOrder="center-out"
+          movementDirection="top-down"
+          textFadeDelay={0.5}
+          className="fixed inset-0 z-[100]"
+          onOpen={() => setHeroVisible(true)}
+          onComplete={() => setLoading(false)}
+        />
+      )}
       <TargetCursor
         spinDuration={4}
         hideDefaultCursor={true}
@@ -156,7 +174,7 @@ export default function App() {
         <BrowserRouter>
           <ScrollToTopWrapper />
           <Routes>
-            <Route path="/" element={<LandingPageWrapper />} />
+            <Route path="/" element={<LandingPageWrapper showNav={heroVisible} showHero={heroVisible} />} />
             <Route path="/auth" element={<AuthWrapper onAuth={handleLogin} />} />
 
             {/* Authenticated Routes */}
@@ -222,9 +240,9 @@ export default function App() {
 }
 
 // Wrappers to use hooks inside router
-const LandingPageWrapper = () => {
+const LandingPageWrapper = ({ showNav, showHero }: { showNav: boolean; showHero: boolean }) => {
   const navigate = useNavigate();
-  return <LandingPage onStart={() => navigate('/auth')} />;
+  return <LandingPage onStart={() => navigate('/auth')} showContent={showHero} showNav={showNav} />;
 };
 
 const AuthWrapper = ({ onAuth }: { onAuth: (email: string) => void }) => {
